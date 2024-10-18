@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_bloc/flutter_form_bloc.dart';
-import 'package:infobip_mi_demo_app/blocs/form_blocs/debug/debug_form_bloc.dart';
+import 'package:infobip_mi_demo_app/blocs/form_blocs/settings/debug_form_bloc.dart';
 import 'package:infobip_mi_demo_app/widgets/loading_dialog.dart';
 
 class DebugDialog extends StatelessWidget {

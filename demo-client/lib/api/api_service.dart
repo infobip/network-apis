@@ -9,9 +9,10 @@ import 'package:infobip_mi_demo_app/utils/json_converter.dart';
 import '../config/app_config.dart';
 
 class ApiService {
-  Future<VerifyResult> sendVerifyRequest(String msisdn) async {
+  Future<VerifyResult> sendVerifyRequest(
+      String msisdn, String apiKey, String locationCode) async {
     var cellularHttpClient = resolveHttpClient();
-    return cellularHttpClient.sendVerifyRequest(msisdn);
+    return cellularHttpClient.sendVerifyRequest(msisdn, apiKey, locationCode);
   }
 
   Future<DeviceAddress> fetchDeviceAddress() async {

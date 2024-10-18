@@ -13,14 +13,20 @@ import java.time.ZonedDateTime
 class InfobipHttpClient(
     val infobipHttpClientProperties: InfobipHttpClientProperties
 ) {
-    final inline fun <reified T : Any> sendRequest(httpMethod: HttpMethod, endpoint: String, body: Any): T {
+    final inline fun <reified T : Any> sendRequest(
+        httpMethod: HttpMethod,
+        baseUrl: String,
+        endpoint: String,
+        body: Any,
+        apiKey: String
+    ): T {
         val client: WebClient = WebClient.create()
 
         val response: ResponseEntity<T> = client.method(httpMethod)
-            .uri(infobipHttpClientProperties.infobipBaseUrl + endpoint)
+            .uri(baseUrl + endpoint)
             .bodyValue(body)
             .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .header(HttpHeaders.AUTHORIZATION, infobipHttpClientProperties.authorization)
+            .header(HttpHeaders.AUTHORIZATION, "App $apiKey")
             .accept(MediaType.APPLICATION_JSON)
             .acceptCharset(StandardCharsets.UTF_8)
             .ifNoneMatch("*")

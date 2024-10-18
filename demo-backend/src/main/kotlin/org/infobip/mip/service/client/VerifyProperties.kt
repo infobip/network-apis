@@ -6,5 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class VerifyProperties(
     val zombieRequestsCheckRate: String,
     val callbackEndpoint: String,
-    val usingProxy: Boolean
+    val usingProxy: Boolean,
+    val infobipBaseUrl: Map<String, String>,
 )

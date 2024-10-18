@@ -1,32 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>com.infobip</groupId>
+        <artifactId>infobip-master</artifactId>
+        <version>18.0.0</version>
+    </parent>
+
     <groupId>org.infobip.mip</groupId>
     <artifactId>demo-backend</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2-SNAPSHOT</version>
+
+    <scm>
+        <connection>scm:git:ssh://git@git.ib-ci.com:7999/mip/infobip-mobile-identity-public-demo.git</connection>
+        <developerConnection>scm:git:ssh://git@git.ib-ci.com:7999/mip/infobip-mobile-identity-public-demo.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
-        <java.version>19</java.version>
-        <kotlin.version>1.9.10</kotlin.version>
+        <infobip-dependencies.version>9.6.2</infobip-dependencies.version>
+        <logback-gelf.version>6.1.0</logback-gelf.version>
 
-        <!-- LIBS -->
-        <jackson-module-kotlin.version>2.15.3</jackson-module-kotlin.version>
+        <docker.skipBuild>false</docker.skipBuild>
+        <docker.mainClass>org/infobip/mip/ApplicationKt</docker.mainClass>
     </properties>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.3</version>
-    </parent>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.infobip</groupId>
+                <artifactId>infobip-dependencies</artifactId>
+                <version>${infobip-dependencies.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
             <version>${kotlin.version}</version>
+        </dependency>
+
+        <!-- INFOBIP -->
+        <dependency>
+            <groupId>org.infobip.common.remoting</groupId>
+            <artifactId>infobip-remoting-spring-boot-starter</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.infobip.common</groupId>
+            <artifactId>infobip-remoting-bean-validation-spring-boot-starter</artifactId>
         </dependency>
 
         <!-- SPRING -->
@@ -54,7 +82,15 @@
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-kotlin</artifactId>
-            <version>${jackson-module-kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.siegmar</groupId>
+            <artifactId>logback-gelf</artifactId>
+            <version>${logback-gelf.version}</version>
         </dependency>
     </dependencies>
 

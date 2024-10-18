@@ -13,7 +13,8 @@ import '../utils/json_converter.dart';
 
 class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
   @override
-  Future<VerifyResult> sendVerifyRequest(String msisdn) async {
+  Future<VerifyResult> sendVerifyRequest(
+      String msisdn, String apiKey, String locationCode) async {
     final client = HttpClient()
       ..connectionTimeout = AppConfiguration.requestTimeout;
 
@@ -24,7 +25,8 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
         return VerifyResult(cellularSwitchResult: switchToCellularResult);
       }
 
-      final token = await _sendVerifyRequest(client, msisdn);
+      final token =
+          await _sendVerifyRequest(client, msisdn, apiKey, locationCode);
 
       final resetNetworkResult = await resetToDefaultNetwork();
       if (resetNetworkResult == null || resetNetworkResult == false) {
@@ -44,8 +46,10 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
     }
   }
 
-  Future<String> _sendVerifyRequest(HttpClient client, String msisdn) async {
-    final backendResponse = await _sendBackendVerifyRequest(client, msisdn);
+  Future<String> _sendVerifyRequest(HttpClient client, String msisdn,
+      String apiKey, String locationCode) async {
+    final backendResponse =
+        await _sendBackendVerifyRequest(client, msisdn, apiKey, locationCode);
 
     final verifyEnterpriseResponse =
         VerifyEnterpriseResponse.fromJson(await toJson(backendResponse));
@@ -71,10 +75,12 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
     return verifyEnterpriseResponse.token!;
   }
 
-  Future<HttpClientResponse> _sendBackendVerifyRequest(
-      HttpClient client, String msisdn) async {
+  Future<HttpClientResponse> _sendBackendVerifyRequest(HttpClient client,
+      String msisdn, String apiKey, String locationCode) async {
     HttpClientRequest enterpriseRequest = await client.getUrl(
         Uri.parse('${AppConfiguration.backendApiBaseUrl}/verify/$msisdn'));
+    enterpriseRequest.headers.set('apiKey', apiKey);
+    enterpriseRequest.headers.set('locationCode', locationCode);
     return await enterpriseRequest
         .close()
         .timeout(AppConfiguration.requestTimeout);

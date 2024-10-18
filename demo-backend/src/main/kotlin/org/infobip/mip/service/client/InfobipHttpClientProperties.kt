@@ -6,6 +6,4 @@ import java.time.Duration
 @ConfigurationProperties(prefix = "infobip-http-client")
 data class InfobipHttpClientProperties(
     val timeout: Duration,
-    val infobipBaseUrl: String,
-    val authorization: String,
 )

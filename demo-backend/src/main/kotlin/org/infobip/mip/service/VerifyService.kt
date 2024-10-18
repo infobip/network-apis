@@ -25,12 +25,19 @@ class VerifyService(
     private val verifyProperties: VerifyProperties,
     private val mapper: ObjectMapper = jacksonObjectMapper()
 ) {
-    fun sendVerifyRequest(msisdn: String, deviceIp: String, devicePort: Int): InfobipVerifyResponse {
+    fun sendVerifyRequest(msisdn: String, deviceIp: String, devicePort: Int, apiKey: String, locationCode: String): InfobipVerifyResponse {
+        val baseUrl = resolveBaseUrl(locationCode)
         val infobipVerifyRequest = InfobipVerifyRequest(true, msisdn, verifyProperties.callbackEndpoint, deviceIp, devicePort)
         val response: InfobipVerifyResponse
 
         try {
-            response = infobipHttpClient.sendRequest<InfobipVerifyResponse>(HttpMethod.POST, VERIFY_ENDPOINT, infobipVerifyRequest)
+            response = infobipHttpClient.sendRequest<InfobipVerifyResponse>(
+                HttpMethod.POST,
+                baseUrl,
+                VERIFY_ENDPOINT,
+                infobipVerifyRequest,
+                apiKey
+            )
         } catch (unauthorized: WebClientResponseException.Unauthorized) {
             log.error("Send verify request failed with Unauthorized: $unauthorized")
             throw MobileIdentityException.Unauthorized()
@@ -61,6 +68,9 @@ class VerifyService(
 
     fun resolveVerifyCallback(token: String, verifyStatus: VerifyStatus?, error: MobileIdentityError?) =
         tokenManagerService.insertVerifyResult(token, VerifyResult(verifyStatus, token, error))
+
+    private fun resolveBaseUrl(locationCode: String): String = verifyProperties.infobipBaseUrl[locationCode]
+        ?: throw IllegalStateException("Something went wrong when resolving baseUrl for location code $locationCode")
 
     companion object {
         const val VERIFY_ENDPOINT = "/mi/verification/1/verify"

@@ -4,6 +4,7 @@ class SMVFailure {
   final String? token;
   final String? deviceIp;
   final int? devicePort;
+  final String? additionalErrorDescription;
 
   SMVFailure(
     this.errorDescription,
@@ -11,5 +12,6 @@ class SMVFailure {
     this.token,
     this.deviceIp,
     this.devicePort,
+    this.additionalErrorDescription,
   });
 }

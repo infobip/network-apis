@@ -17,7 +17,7 @@ class InfoController(
 ) {
     @GetMapping("/device-address")
     fun deviceAddress(request: HttpServletRequest): ResponseEntity<IpAddress> {
-        log.trace(
+        log.info(
             "Fetching device address:\n" +
                     "X-Forwarded-For: ${request.getHeader("X-Forwarded-For")}\n" +
                     "X-Forwarded-Port: ${request.getHeader("X-Forwarded-Port")}\n" +

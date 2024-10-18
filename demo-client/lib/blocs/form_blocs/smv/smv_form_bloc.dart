@@ -8,6 +8,7 @@ import 'package:infobip_mi_demo_app/api/models/verify_exception.dart';
 import 'package:infobip_mi_demo_app/api/models/verify_result.dart';
 import 'package:infobip_mi_demo_app/blocs/form_blocs/smv/models/smv_failure.dart';
 import 'package:infobip_mi_demo_app/blocs/form_blocs/smv/models/smv_success.dart';
+import 'package:infobip_mi_demo_app/config/app_config.dart';
 import 'package:infobip_mi_demo_app/utils/validators.dart';
 
 class SMVFormBloc extends FormBloc<SMVSuccess, SMVFailure> {
@@ -19,8 +20,10 @@ class SMVFormBloc extends FormBloc<SMVSuccess, SMVFailure> {
   );
 
   final bool debugEnabled;
+  final String? apiKey;
+  final Location location;
 
-  SMVFormBloc(this.debugEnabled) {
+  SMVFormBloc(this.debugEnabled, this.apiKey, this.location) {
     addFieldBloc(fieldBloc: msisdn);
   }
 
@@ -37,22 +40,24 @@ class SMVFormBloc extends FormBloc<SMVSuccess, SMVFailure> {
       if (debugEnabled) {
         deviceAddress = await client.fetchDeviceAddress();
       }
-      var result = await client.sendVerifyRequest(msisdn.value);
-
+      var result =
+          await client.sendVerifyRequest(msisdn.value, apiKey!, location.name);
       _handleResult(result, deviceAddress);
     } on VerifyException catch (e) {
       developer.log('Error during verifying with exception: $e');
       emitFailure(
-          failureResponse: SMVFailure(e.errorDescription, msisdn.value,
+          failureResponse: SMVFailure('Something went wrong', msisdn.value,
               token: e.token,
               deviceIp: deviceAddress?.address,
-              devicePort: deviceAddress?.port));
-    } catch (e) {
+              devicePort: deviceAddress?.port,
+              additionalErrorDescription: e.errorDescription));
+    } on Exception catch (e) {
       developer.log('Error during verifying with exception: $e');
       emitFailure(
           failureResponse: SMVFailure('Something went wrong', msisdn.value,
               deviceIp: deviceAddress?.address,
-              devicePort: deviceAddress?.port));
+              devicePort: deviceAddress?.port,
+              additionalErrorDescription: e.toString()));
     }
   }
 

@@ -57,7 +57,16 @@ class SMVErrorDialog extends StatelessWidget {
                         Text('Device IP: ${failureResult.deviceIp!}'),
                         const SizedBox(height: 2),
                         Text(
-                            'Device port: ${failureResult.devicePort!.toString()}')
+                            'Device port: ${failureResult.devicePort!.toString()}'),
+                        if (failureResult.additionalErrorDescription !=
+                            null) ...[
+                          const SizedBox(height: 16),
+                          const Text('Error description:'),
+                          Text(
+                            failureResult.additionalErrorDescription!,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ]
                       ],
                     ],
                   ),

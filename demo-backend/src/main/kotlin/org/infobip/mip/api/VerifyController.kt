@@ -24,8 +24,10 @@ class VerifyController(
 ) {
     @GetMapping("/{msisdn}")
     fun verify(@PathVariable msisdn: String, request: HttpServletRequest): ResponseEntity<Any> {
-        log.trace(
+        log.info(
             "Got verify request:\n" +
+                    "Location: ${request.getHeader("locationCode")}\n" +
+                    "Msisdn: $msisdn\n" +
                     "X-Forwarded-For: ${request.getHeader("X-Forwarded-For")}\n" +
                     "X-Forwarded-Port: ${request.getHeader("X-Forwarded-Port")}\n" +
                     "RemoteAddr: ${request.remoteAddr}\n" +
@@ -34,16 +36,22 @@ class VerifyController(
 
         val deviceIpAddress = resolveIpAddress(request, verifyProperties.usingProxy)
 
-        val response = verifyService.sendVerifyRequest(msisdn, deviceIpAddress.address, deviceIpAddress.port)
+        val response = verifyService.sendVerifyRequest(
+            msisdn,
+            deviceIpAddress.address,
+            deviceIpAddress.port,
+            request.getHeader("apiKey"),
+            request.getHeader("locationCode")
+        )
 
-        log.trace("Got verify response: \n {}", response)
+        log.info("Got verify response: \n {}", response)
 
         return ResponseEntity.ok(ClientVerifyResponse(response.token, response.deviceRedirectUrl))
     }
 
     @GetMapping("/result/{token}")
     fun checkToken(@PathVariable token: String): ResponseEntity<ClientVerifyResultResponse?> {
-        log.trace("Checking verify result by token: $token\n")
+        log.info("Checking verify result by token: $token\n")
 
         val verifyResult = verifyService.checkForVerifyResult(token) ?: return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
 
@@ -60,7 +68,7 @@ class VerifyController(
     fun callback(
         @Valid @RequestBody callbackRequest: CallbackRequest,
     ): ResponseEntity<Void> {
-        log.trace("Got verify result on callback: {}\n", callbackRequest)
+        log.info("Got verify result on callback: {}\n", callbackRequest)
 
         verifyService.resolveVerifyCallback(
             callbackRequest.token,

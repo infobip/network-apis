@@ -9,3 +9,15 @@ class DebugChanged extends AppEvent {
 
   final bool debug;
 }
+
+class ApiKeyChanged extends AppEvent {
+  const ApiKeyChanged(this.apiKey);
+
+  final String? apiKey;
+}
+
+class LocationChanged extends AppEvent {
+  const LocationChanged(this.location);
+
+  final Location location;
+}

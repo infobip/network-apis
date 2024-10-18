@@ -14,15 +14,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 class VerifyExceptionHandler {
     @ExceptionHandler
     fun invalidApiKey(exception: MobileIdentityException.Unauthorized): ResponseEntity<ClientVerifyResultResponse> {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ClientVerifyResultResponse("Something went wrong"))
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ClientVerifyResultResponse("Unauthorized"))
     }
 
     @ExceptionHandler
     fun badRequest(exception: MobileIdentityException.BadRequest): ResponseEntity<ClientVerifyResultResponse> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             ClientVerifyResultResponse(
-                "Something went wrong",
+                exception.errorResponse.error!!.description,
                 exception.errorResponse.token
+            )
+        )
+    }
+
+    @ExceptionHandler
+    fun exception(exception: Exception): ResponseEntity<ClientVerifyResultResponse> {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+            ClientVerifyResultResponse(
+                exception.message ?: "Unknown error"
             )
         )
     }

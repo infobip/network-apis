@@ -10,6 +10,8 @@ import 'package:infobip_mi_demo_app/widgets/loading_dialog.dart';
 import 'package:infobip_mi_demo_app/widgets/smv/smv_error_dialog.dart';
 import 'package:infobip_mi_demo_app/widgets/smv/smv_result_dialog.dart';
 
+import '../widgets/smv/apikey_warning_widget.dart';
+
 class SMVScreen extends StatelessWidget {
   const SMVScreen({
     super.key,
@@ -54,7 +56,8 @@ class SMVForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SMVFormBloc(appState.debug),
+      create: (context) =>
+          SMVFormBloc(appState.debug, appState.apiKey, appState.location),
       child: Builder(
         builder: (context) {
           final smvFormBloc = context.read<SMVFormBloc>();
@@ -85,8 +88,10 @@ class SMVForm extends StatelessWidget {
               physics: const ClampingScrollPhysics(),
               child: Column(
                 children: <Widget>[
+                  if (!appState.isApiKeySet) ...{const ApiKeyWarning()},
                   TextFieldBlocBuilder(
                     textFieldBloc: smvFormBloc.msisdn,
+                    isEnabled: appState.isApiKeySet,
                     keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(
                       labelText: 'MSISDN',
@@ -103,7 +108,8 @@ class SMVForm extends StatelessWidget {
                     },
                   ),
                   ElevatedButton(
-                    onPressed: smvFormBloc.submit,
+                    onPressed:
+                        !appState.isApiKeySet ? null : smvFormBloc.submit,
                     child: const Text('Verify'),
                   ),
                 ],

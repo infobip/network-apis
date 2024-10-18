@@ -1,12 +1,24 @@
 server:
-  port: 8080
+  port: ${HTTP_PORT}
 
 verify:
   zombie-requests-check-rate: "0 */20 * * * *"
-  callback-endpoint: https://<your-domain>:${server.port}/verify/callback
+  callback-endpoint: http://${SERVER_IP}:${HTTP_PORT}/verify/callback
   using-proxy: false
+  infobip-base-url:
+    iov3: ${MOBILE_IDENTITY_IOV3_BASE_URL}
+    sp3: ${MOBILE_IDENTITY_SP3_BASE_URL}
+    fr4: ${MOBILE_IDENTITY_FR_BASE_URL}
+    munm: ${MOBILE_IDENTITY_MUNM_BASE_URL}
 
 infobip-http-client:
   timeout: 15s
-  infobip-base-url: "api.infobip.com"
-  authorization: "App <your-authorization-key>"
+
+infobip.remoting:
+  server:
+    autostart: false
+    properties:
+      mml.rmi.enabled: false
+    filter:
+      enabled: true
+      allowedRmiPort: ${HTTP_RMI_PORT}
