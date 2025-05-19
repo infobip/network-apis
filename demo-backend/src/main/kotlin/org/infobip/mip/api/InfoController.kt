@@ -19,6 +19,7 @@ class InfoController(
     fun deviceAddress(request: HttpServletRequest): ResponseEntity<IpAddress> {
         log.info(
             "Fetching device address:\n" +
+                    "X-Forwarded-For: ${request.getHeader("X-Forwarded-For")}\n" +
                     "RemoteAddr: ${request.remoteAddr}\n" +
                     "RemotePort: ${request.remotePort}\n"
         )
