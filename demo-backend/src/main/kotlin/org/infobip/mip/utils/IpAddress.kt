@@ -1,86 +1,55 @@
 package org.infobip.mip.utils
 
 import jakarta.servlet.http.HttpServletRequest
-import org.slf4j.LoggerFactory
-import java.net.Inet6Address
-import java.net.InetAddress
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-private val log = LoggerFactory.getLogger(IpAddress::class.java)
-
 private val forwardedForPattern: Pattern = Pattern.compile("^[^, ]+")
-
 data class IpAddress(val address: String, val port: Int)
 
 fun resolveIpAddress(request: HttpServletRequest, usingProxy: Boolean): IpAddress {
     return if (usingProxy) {
-        resolveIpAddress(request.getHeader("X-Forwarded-For")!!, request.getHeader("X-Forwarded-Port")?.toInt())
+        resolveIpAddress(request.getHeader("X-Forwarded-For")!!)
     } else {
         IpAddress(request.remoteAddr, request.remotePort)
     }
 }
 
-fun resolveIpAddress(forwardedForAddress: String, forwardedForPort: Int?): IpAddress {
-    if (isIPv6(forwardedForAddress)) {
-        return resolveIpv6Address(forwardedForAddress, forwardedForPort)
-    }
-    return resolveIpv4Address(forwardedForAddress, forwardedForPort)
+fun resolveIpAddress(forwardedForAddress: String): IpAddress {
+    val (ip, port) = extractIpAndPort(forwardedForAddress)
+    return IpAddress(ip, port)
 }
 
-private fun isIPv6(ipAddress: String): Boolean {
-    if (ipAddress.startsWith("[")) {
-        return true
+/**
+ * Extract IP and port from address string. Handles both IPv4 and IPv6.
+ * Examples:
+ * - 1.2.3.4:5678
+ * - [2001:db8::1]:5678
+ * - 1.2.3.4
+ * - [2001:db8::1]
+ */
+private fun extractIpAndPort(addressString: String): Pair<String, Int> {
+    val addressRaw = forwardedForPattern.matcher(addressString).run {
+        if (find()) group() else addressString
     }
-    return try {
-        val inetAddress = InetAddress.getByName(ipAddress)
-        inetAddress is Inet6Address
-    } catch (e: Exception) {
-        log.error("Error while checking if address is IPv6", e)
-        false
-    }
-}
 
-private fun resolveIpv6Address(forwardedForAddress: String, forwardedForPort: Int?): IpAddress {
-    if (forwardedForAddress.startsWith("[")) {
-        return resolveProxiedIpv6Address(forwardedForAddress, forwardedForPort)
-    }
-    return IpAddress(forwardedForAddress, forwardedForPort ?: 0)
-}
-
-private fun resolveProxiedIpv6Address(forwardedForAddress: String, forwardedForPort: Int?): IpAddress {
-    val endingBracketIndex: Int = forwardedForAddress.indexOf(']')
-    val ipAddress: String = forwardedForAddress.substring(1, endingBracketIndex)
-    return if (isIPv6(ipAddress)) {
-        var port = forwardedForPort ?: 0
-        if (forwardedForAddress[endingBracketIndex + 1] == ':') {
-            port = forwardedForAddress.substring(endingBracketIndex + 2).toInt()
+    return if (addressRaw.startsWith("[")) {
+        val endBracketIdx = addressRaw.indexOf(']')
+        if (endBracketIdx == -1) {
+            throw IllegalArgumentException("Invalid IPv6 address format: $addressRaw")
         }
-        IpAddress(ipAddress, port)
+        val ip = addressRaw.substring(1, endBracketIdx)
+        val port = if (endBracketIdx + 1 < addressRaw.length && addressRaw[endBracketIdx + 1] == ':') {
+            addressRaw.substring(endBracketIdx + 2).toIntOrNull() ?: 0
+        } else {
+            0
+        }
+        Pair(ip, port)
     } else {
-        log.error("Error while resolving proxied IPv6")
-        throw Exception("Error while resolving proxied IPv6")
+        val parts = addressRaw.split(':')
+        if (parts.size == 2) {
+            Pair(parts[0], parts[1].toIntOrNull() ?: 0)
+        } else {
+            Pair(addressRaw, 0)
+        }
     }
-}
-
-private fun resolveIpv4Address(
-    forwardedForAddress: String,
-    forwardedForPort: Int?
-): IpAddress {
-    val addressMatcher: Matcher = forwardedForPattern.matcher(forwardedForAddress)
-    addressMatcher.find()
-    val address: String = addressMatcher.group()
-    val addressParts = address.split(":").toTypedArray()
-
-    val port: Int = if (addressParts.size > 1) {
-        addressParts[1].toInt()
-    } else if (forwardedForPort != null) {
-        val portMatcher: Matcher = forwardedForPattern.matcher(forwardedForPort.toString())
-        portMatcher.find()
-        portMatcher.group().toInt()
-    } else {
-        0
-    }
-
-    return IpAddress(addressParts[0], port)
 }

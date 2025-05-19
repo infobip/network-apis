@@ -29,7 +29,6 @@ class VerifyController(
                     "Location: ${request.getHeader("locationCode")}\n" +
                     "Msisdn: $msisdn\n" +
                     "X-Forwarded-For: ${request.getHeader("X-Forwarded-For")}\n" +
-                    "X-Forwarded-Port: ${request.getHeader("X-Forwarded-Port")}\n" +
                     "RemoteAddr: ${request.remoteAddr}\n" +
                     "RemotePort: ${request.remotePort}\n"
         )
