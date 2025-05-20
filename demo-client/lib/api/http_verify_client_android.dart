@@ -157,7 +157,7 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
           String? proxyHost,
           int? proxyPort,
           ) {
-        return Socket.startConnect(addresses.first, uri.port == 0 ? port : uri.port);
+        return SecureSocket.startConnect(addresses.first, uri.port == 0 ? port : uri.port);
       };
     } catch (e) {
       throw Exception('Unable to setup HttpClient: $e');
