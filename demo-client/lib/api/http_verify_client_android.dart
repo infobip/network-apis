@@ -25,7 +25,7 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
         return VerifyResult(cellularSwitchResult: switchToCellularResult);
       }
 
-      if(await _checkIfDeviceIsOnIpv6Network()) {
+      if (await _checkIfDeviceIsOnIpv6Network()) {
         await _resolveIPv6Address(client, AppConfiguration.backendApiBaseUrl);
       }
 
@@ -129,13 +129,11 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
   }
 
   Future<bool> _checkIfDeviceIsOnIpv6Network() async {
-    final interfaces = await NetworkInterface.list(
-      type: InternetAddressType.IPv6
-    );
+    final interfaces =
+        await NetworkInterface.list(type: InternetAddressType.IPv6);
 
     return interfaces.isNotEmpty;
   }
-
 
   Future<void> _resolveIPv6Address(HttpClient client, String baseUrl) async {
     final uri = Uri.parse(baseUrl);
@@ -153,15 +151,19 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
       }
 
       client.connectionFactory = (
-          Uri uri,
-          String? proxyHost,
-          int? proxyPort,
-          ) {
-        return SecureSocket.startConnect(addresses.first, uri.port == 0 ? port : uri.port);
+        Uri uri,
+        String? proxyHost,
+        int? proxyPort,
+      ) {
+        if (uri.scheme == 'https') {
+          return SecureSocket.startConnect(
+              addresses.first, uri.port == 0 ? port : uri.port);
+        }
+        return Socket.startConnect(
+            addresses.first, uri.port == 0 ? port : uri.port);
       };
     } catch (e) {
       throw Exception('Unable to setup HttpClient: $e');
     }
   }
-
 }
