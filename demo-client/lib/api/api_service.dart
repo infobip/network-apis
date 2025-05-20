@@ -7,6 +7,7 @@ import 'package:infobip_mi_demo_app/api/models/verify_result.dart';
 import 'package:infobip_mi_demo_app/utils/json_converter.dart';
 
 import '../config/app_config.dart';
+import '../utils/ipv6_utils.dart';
 
 class ApiService {
   Future<VerifyResult> sendVerifyRequest(
@@ -18,6 +19,10 @@ class ApiService {
   Future<DeviceAddress> fetchDeviceAddress() async {
     final client = HttpClient()
       ..connectionTimeout = AppConfiguration.requestTimeout;
+
+    if (await IPv6Utils.checkIfDeviceIsOnIpv6Network()) {
+      await IPv6Utils.resolveIPv6Address(client, AppConfiguration.backendApiBaseUrl);
+    }
 
     final enterpriseRequest = await client.getUrl(
         Uri.parse('${AppConfiguration.backendApiBaseUrl}/device-address'));

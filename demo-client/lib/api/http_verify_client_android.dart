@@ -9,6 +9,7 @@ import 'package:infobip_mi_demo_app/api/models/verify_result.dart';
 import 'package:infobip_mi_demo_app/config/app_config.dart';
 import 'package:infobip_mi_demo_app/services/native_invocation.dart';
 
+import '../utils/ipv6_utils.dart';
 import '../utils/json_converter.dart';
 
 class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
@@ -25,8 +26,8 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
         return VerifyResult(cellularSwitchResult: switchToCellularResult);
       }
 
-      if (await _checkIfDeviceIsOnIpv6Network()) {
-        await _resolveIPv6Address(client, AppConfiguration.backendApiBaseUrl);
+      if (await IPv6Utils.checkIfDeviceIsOnIpv6Network()) {
+        await IPv6Utils.resolveIPv6Address(client, AppConfiguration.backendApiBaseUrl);
       }
 
       final token =
@@ -126,44 +127,5 @@ class AndroidHttpVerifyClient implements CellularHttpVerifyClient {
       }
     }
     throw Exception('Failed to fetch callback result');
-  }
-
-  Future<bool> _checkIfDeviceIsOnIpv6Network() async {
-    final interfaces =
-        await NetworkInterface.list(type: InternetAddressType.IPv6);
-
-    return interfaces.isNotEmpty;
-  }
-
-  Future<void> _resolveIPv6Address(HttpClient client, String baseUrl) async {
-    final uri = Uri.parse(baseUrl);
-    final host = uri.host;
-    final port = uri.scheme == 'https' ? 443 : 80;
-
-    try {
-      final addresses = await InternetAddress.lookup(
-        host,
-        type: InternetAddressType.IPv6,
-      );
-
-      if (addresses.isEmpty) {
-        return;
-      }
-
-      client.connectionFactory = (
-        Uri uri,
-        String? proxyHost,
-        int? proxyPort,
-      ) {
-        if (uri.scheme == 'https') {
-          return SecureSocket.startConnect(
-              addresses.first, uri.port == 0 ? port : uri.port);
-        }
-        return Socket.startConnect(
-            addresses.first, uri.port == 0 ? port : uri.port);
-      };
-    } catch (e) {
-      throw Exception('Unable to setup HttpClient: $e');
-    }
   }
 }
