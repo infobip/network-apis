@@ -1,0 +1,44 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: enterprise-backend
+  jackson:
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+    datatype:
+      enum:
+        read-unknown-enum-values-as-null: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  level:
+    com.infobip.napi: DEBUG
+
+verify:
+  domain: ${ENTERPRISE_BACKEND_DOMAIN:}
+  using-proxy: ${VERIFY_USING_PROXY:false}
+  result-ttl: 5m
+  authorization-state-ttl: 5m
+  max-entries: 10000
+  camara-client-id: ${CAMARA_CLIENT_ID:}
+
+auth:
+  token-secret: ${ENTERPRISE_AUTH_TOKEN_SECRET:}
+  token-ttl: 1h
+  clients:
+    - client-id: ${ENTERPRISE_CLIENT_ID:}
+      client-secret: ${ENTERPRISE_CLIENT_SECRET:}
+
+infobip:
+  base-url: ${INFOBIP_BASE_URL:}
+  authorization-header-value: ${INFOBIP_AUTHORIZATION_HEADER_VALUE:}
+  connect-timeout: 2s
+  read-timeout: 10s

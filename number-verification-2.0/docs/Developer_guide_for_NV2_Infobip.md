@@ -25,7 +25,7 @@ Mobile App                     Client Backend                    Aggregator (Inf
    │  1. carrier ID(s)               │                                    │
    ├────────────────────────────────►│                                    │
    │                                 │  2. DCQL request                   │
-   │                                 ├───────────────────────────────────►│  /dcql endpoint
+   │                                 ├───────────────────────────────────►│  /dcql/* endpoint
    │                                 │◄───────────────────────────────────┤
    │  (backend builds OpenID4VP request, hands it to the app)             │
    │◄────────────────────────────────┤                                    │
@@ -45,13 +45,13 @@ Mobile App                     Client Backend                    Aggregator (Inf
 
 | Term                               | Definition                                                                                                                                                                                                                                                                                                                                                                                                                   |
 |------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Infobip (Aggregator)**           | The cloud-side entity that exposes the `/dcql`, `/device-phone-number`, and `/verify` endpoints to the application backend, holds the ephemeral private key for JWE decryption, and exchanges the operator's `temp_token` with the operator/carrier.                                                                                                                                                                         |
+| **Infobip (Aggregator)**           | The cloud-side entity that exposes the `/dcql/verify`, `/dcql/device-phone-number`, `/device-phone-number`, and `/verify` endpoints to the application backend, holds the ephemeral private key for JWE decryption, and exchanges the operator's `temp_token` with the operator/carrier.                                                                                                                                                                         |
 | **Application**                    | The mobile app plus its backend, together forming the client that initiates the NV flow on behalf of the end user.                                                                                                                                                                                                                                                                                                           |
 | **Application backend**            | Mobile application's backend, used for communication with Infobip.                                                                                                                                                                                                                                                                                                                                                           |
 | **Mobile app**                     | The mobile app, used as a bridge between the Android and the Application backend.                                                                                                                                                                                                                                                                                                                                            |
 | **Operator Token**                 | Android/CAMARA term for the SD-JWT credential (`<Issuer JWT>~<Binding JWT>`) that `CredentialManager` returns as the `vp_token`. It's the transport structure for the operator's `temp_token`: the Issuer JWT (signed by Android Telephony) asserts the credential type and device key binding; the Binding JWT carries the nonce, consent hash, carrier identification, and the `temp_token` itself, encrypted.             |
 | **`temp_token`**                   | The GSMA TS.43 Temporary Token issued by the operator's entitlement server (ECS) and handed to the device to be passed to Infobip for authentication on the ECS. Never sent in plaintext — it travels encrypted (JWE, ECDH-ES + A128GCM) inside the Operator Token's Binding JWT, and only the Aggregator can decrypt it.                                                                                                    |
-| **`credential_authorization_jwt`** | A JWT signed by Infobip (an ES256 JWS), returned in the `/dcql` response's `meta` field. Serves three purposes at once: (1) proves to Android/GMS that Infobip is authorised to request an Operator Token for the SIM's carrier (signature verified against a per-carrier whitelist), (2) carries Infobip's ephemeral public key used later to encrypt the `temp_token`, and (3) carries the consent text shown in the Android system dialog. |
+| **`credential_authorization_jwt`** | A JWT signed by Infobip (an ES256 JWS), returned in the `/dcql/*` response's `meta` field. Serves three purposes at once: (1) proves to Android/GMS that Infobip is authorised to request an Operator Token for the SIM's carrier (signature verified against a per-carrier whitelist), (2) carries Infobip's ephemeral public key used later to encrypt the `temp_token`, and (3) carries the consent text shown in the Android system dialog. |
 | **NV**                             | Number Verification.                                                                                                                                                                                                                                                                                                                                                                                                         |
 | **CAMARA**                         | An open-source global alliance that standardizes network APIs, like number verification, across telecommunications operators.                                                                                                                                                                                                                                                                                                |
 | **TS.43**                          | Technical specification that standardizes Service Entitlement Configuration, defining how mobile devices query an operator's server to verify if a subscription is authorized to use specific network services                                                                                                                                                                                                               |
@@ -159,15 +159,21 @@ personalized URL's [here](https://www.infobip.com/docs/essentials/api-essentials
 ### 2.1 DCQL Request
 
 > API reference:
-> [Number verification DCQL Request](https://www.infobip.com/docs/api/connectivity/camara/sim-based-number-verification/create-dcql-request)
+> [Number verification DCQL Request](https://www.infobip.com/docs/api/connectivity/camara/sim-based-number-verification/create-verify-dcql-request)
 
 The mobile app collects carrier IDs from the active SIM(s) and sends them to the application
 backend. The application backend then requests a DCQL credential authorization from Infobip. In the
-request, the application backend sends the list of carrier IDs, a nonce and a useCase.
+request, the application backend sends the list of carrier IDs and a nonce.
+
+The TS.43 use case is selected by the endpoint path:
+
+* `POST /camara/number-verification/v2/dcql/verify` - verify phone number
+* `POST /camara/number-verification/v2/dcql/device-phone-number` - get phone number
+
+Both endpoints take the same request body and return the same response.
 
 Breakdown of each body parameter:
 
-* `useCase` - the TS.43 operation use case. Possible values: GET_PHONE_NUMBER, VERIFY_PHONE_NUMBER
 * `carrierIds` - array of Android canonical carrier IDs received from the mobile app
 * `nonce` - A single-use, application-generated value. The Application keeps it and uses it to
   correlate the eventual
@@ -176,11 +182,10 @@ Breakdown of each body parameter:
 **curl:**
 
 ```bash
-curl -X POST https://<infobip-base-url>/camara/number-verification/v2/dcql \
+curl -X POST https://<infobip-base-url>/camara/number-verification/v2/dcql/verify \
     -H "Content-Type: application/json" \
     -H "Authorization: App <infobipApiKey>" \
     -d '{
-      "useCase": "VERIFY_PHONE_NUMBER",
       "carrierIds": [1234, 5678],
       "nonce": "2307e608-e619-4df5-a460-a99b4446f3f0"
     }'
@@ -192,7 +197,6 @@ curl -X POST https://<infobip-base-url>/camara/number-verification/v2/dcql \
 private String fetchDcql(List<Integer> carrierIds, String nonce) {
     RequestBody requestBody = RequestBody.create(
             new JSONObject()
-                    .put("useCase", "VERIFY_PHONE_NUMBER")
                     .put("carrierIds", new JSONArray(carrierIds))
                     .put("nonce", nonce)
                     .toString(),
@@ -200,7 +204,7 @@ private String fetchDcql(List<Integer> carrierIds, String nonce) {
     );
 
     Request request = new Request.Builder()
-            .url(INFOBIP_BASE_URL + "/camara/number-verification/v2/dcql")
+            .url(INFOBIP_BASE_URL + "/camara/number-verification/v2/dcql/verify")
             .header("Authorization", "App " + infobipApiKey)
             .post(requestBody)
             .build();
@@ -285,7 +289,7 @@ performs the TS.43 / EAP-AKA SIM challenge and returns a vp_token.
 
 ### 2.1.2 Building the OpenID4VP Request
 
-The response from the `/dcql` endpoint (section 2.1.1) is a map containing DCQL credential objects.
+The response from the `/dcql/*` endpoint (section 2.1.1) is a map containing DCQL credential objects.
 These credential
 objects can **not** be passed to `CredentialManager` directly. First, one of those credential
 objects must be wrapped
@@ -330,7 +334,7 @@ Wrap `dcql_query` together with a few fixed and per-request fields:
 * `data.response_type` — fixed value `"vp_token"`
 * `data.response_mode` — fixed value `"dc_api"`
 * `data.nonce` — a unique value generated by your backend for each request. **This must be the
-  same nonce sent in the original `/dcql` request** (section 2.1) — it ties the credential request
+  same nonce sent in the original `/dcql/*` request** (section 2.1) — it ties the credential request
   back to the DCQL authorization that produced it, and a mismatched nonce will be rejected.
 * `data.dcql_query` — the object built in step 1, specifying which digital credential(s) are being
   requested.

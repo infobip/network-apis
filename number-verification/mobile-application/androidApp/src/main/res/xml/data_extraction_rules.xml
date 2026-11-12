@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup is disabled at the application level (android:allowBackup="false"), because the
+  app persists an API key / access token in SharedPreferences. These rules are the
+  API 31+ belt-and-braces equivalent: exclude the settings store from both cloud backup
+  and device-to-device transfer so credentials cannot leave the device.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="napi_client_settings.xml"/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="napi_client_settings.xml"/>
+    </device-transfer>
+</data-extraction-rules>

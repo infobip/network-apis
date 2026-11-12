@@ -1,0 +1,43 @@
+# Gradle / Kotlin
+.gradle
+.kotlin
+**/build/
+!src/**/build/
+local.properties
+
+# IDE
+*.iml
+*.ipr
+*.iws
+.idea/
+/out/
+atlassian-ide-plugin.xml
+
+# Xcode
+xcuserdata
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+iosApp/Configuration/Local.xcconfig
+
+# Android
+captures
+.externalNativeBuild
+.cxx
+
+# macOS
+.DS_Store
+
+# Serena MCP Server stuff
+.serena
+
+# Release signing material -- never commit
+keystore.properties
+*.jks
+*.keystore
+*.mobileprovision
+*.p12
+*.cer

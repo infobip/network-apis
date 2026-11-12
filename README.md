@@ -1,59 +1,62 @@
-# Silent Mobile Verification Demo
+# Infobip Network APIs Demo
 
-This is a [Silent mobile verification](https://www.infobip.com/docs/mobile-identity/services/#silent) implementation demonstration meant to ease client integration process. It consists of two modules: enterprise backend and an end-user client. Additional information can be found on our <a href="https://github.com/infobip/infobip-silent-mobile-verification-demo/wiki" target="_blank">Wiki</a>.
-Published under [Apache 2.0 license](LICENSE).
+This repository demonstrates how to integrate Infobip's Network APIs from your own backend and mobile app. It covers:
+
+* [Silent Mobile Verification](https://www.infobip.com/docs/mobile-identity/services/#silent) (SMV)
+* CAMARA Number Verification, with the device redirected through the mobile network operator
+* SIM-based Number Verification (NV 2.0), built on GSMA TS.43 and Android `CredentialManager` (Android only)
+
+The demo has two parts: an enterprise backend that calls the Infobip API, and a mobile app that never calls Infobip directly and goes through that backend instead. More information is on the [Wiki](https://github.com/infobip/network-apis/wiki).
+Published under the [Apache 2.0 license](LICENSE).
+
+## Repository layout
+
+| Path | Description |
+|---|---|
+| [`number-verification/backend`](number-verification/backend/README.md) | Enterprise backend, Spring Boot (Kotlin). Starts SMV and CAMARA Number Verification flows, serves the SIM-based flows, and returns the results to the app. |
+| [`number-verification/mobile-application`](number-verification/mobile-application/README.md) | Mobile app for Android and iOS, built with Kotlin Multiplatform and Compose Multiplatform. |
+| [`number-verification-2.0/docs`](number-verification-2.0/docs/Developer_guide_for_NV2_Infobip.md) | NV 2.0 developer guide, with sequence diagrams. |
 
 ## Requirements
-The following requirements need to be installed and available in your `$PATH`
 
-### For backend module:
-* JDK 19 or above
-* [Apache Maven](https://maven.apache.org/download.cgi)
+### Backend
+* JDK 21, or Docker
 
-### For client module:
-* Flutter 3.19.0 or above
-* 26 (Android 8.0) - 30 (Android 13.0) API level to run on an Android device
-
-### Dependencies setup
-
-    $ git clone git@github.com:infobip/infobip-silent-mobile-verification-demo
-    $ cd infobip-silent-mobile-verification-demo/demo-backend
-    $ mvn install
-    $ cd ../demo-client
-    $ flutter pub get
+### Mobile application
+* JDK 21
+* Android Studio or IntelliJ IDEA with Kotlin Multiplatform support
+* Android: Android SDK. Minimum API level 26 (Android 8.0), target API level 36.
+* iOS: macOS with Xcode. Minimum deployment target iOS 18.2.
 
 ## Quick start guide
 
-### Note
-iOS part of the demo application is currently not fully developed and will be available soon. Application can be built, but it will not work as expected.
+    $ git clone https://github.com/infobip/network-apis.git
+    $ cd network-apis
 
-### Initialize the application
-#### Get API key and base URL
-The application uses the [API Key Header](https://www.infobip.com/docs/essentials/api-authentication#api-key-header) authentication method to communicate with the Infobip's Mobile Identity services. Note that there are other authentication methods available too (see [the official documentation](https://www.infobip.com/docs/essentials/api-authentication)).
-Once you have an [Infobip account](https://www.infobip.com/signup), you can manage your API keys through the Infobip [API key management page](https://portal.infobip.com/settings/accounts/api-keys).
-To see your base URL, log in to the [Infobip API Resource](https://www.infobip.com/docs/api) hub with your Infobip credentials or visit your [Infobip account](https://portal.infobip.com/homepage/).
+### Get API key and base URL
+The backend uses the [API Key Header](https://www.infobip.com/docs/essentials/api-authentication#api-key-header) authentication method to communicate with Infobip's Network APIs. Other authentication methods are also available (see [the official documentation](https://www.infobip.com/docs/essentials/api-authentication)).
+Once you have an [Infobip account](https://www.infobip.com/signup), you can manage your API keys on the Infobip [API key management page](https://portal.infobip.com/settings/accounts/api-keys). The key needs the `mobile-identity:manage` scope.
+To find your base URL, log in to the [Infobip API Resource](https://www.infobip.com/docs/api) hub with your Infobip credentials, or visit your [Infobip account](https://portal.infobip.com/homepage/).
 
-#### Publicly expose backend service callback endpoint
-Backend service application needs to have a publicly available callback endpoint so that Infobip is able to reach it. In this demo, the callback endpoint is set on `/verify/callback`.
+### Run the backend
+The backend is configured with environment variables only. These are the required ones:
 
-#### Set backend service application properties
-With this information, properties in `infobip-silent-mobile-verification-demo/demo-backend/src/main/resources/application.yml` should be changed as follows:
-* append `App ` string with the API key as the `infobip-http-client.authorization` property
-* base URL as the `infobip-http-client.infobip-base-url` property
-* publicly exposed callback endpoint URL as the `verify.callback-endpoint` property
-* set the `using-proxy` property to `true` if there is a proxy between the end-user client and the backend service communication
+    $ export ENTERPRISE_BACKEND_DOMAIN=https://enterprise-backend.example.com
+    $ export INFOBIP_BASE_URL=https://xxxxx.api.infobip.com
+    $ export INFOBIP_AUTHORIZATION_HEADER_VALUE="<autorization-header-value>"
+    $ export ENTERPRISE_CLIENT_ID=... ENTERPRISE_CLIENT_SECRET=... ENTERPRISE_AUTH_TOKEN_SECRET=...
+    $ cd number-verification/backend
+    $ ./mvnw clean verify
+    $ java -jar infobip-napi-enterprise-backend/target/enterprise-backend-service-*.jar
 
-#### Set end-user client application properties
-On the end-user client, `backendApiBaseUrl` property in `infobip-silent-mobile-verification-demo/demo-client/lib/config/app_config.dart` should be set to a URL of the backend service that is accessible by the end-user client (if having problems with this see <a href="https://github.com/infobip/infobip-silent-mobile-verification-demo/wiki/Why-the-end-user-client-can-not-access-the-backend-service%3F" target="_blank">Why the end-user client can not access the backend service?</a>).
+To use CAMARA Number Verification (`nv`), also set `CAMARA_CLIENT_ID`. The [backend README](number-verification/backend/README.md) lists every setting, every endpoint, and how to run the backend with Docker.
 
-### Run the backend application
+`ENTERPRISE_BACKEND_DOMAIN` must be a public HTTPS URL that both the devices and the Infobip API can reach. The Infobip API sends SMV results to `{ENTERPRISE_BACKEND_DOMAIN}/napi/verify/callback`, and at the end of the CAMARA flow the device is redirected back to the backend.
 
-    $ cd infobip-silent-mobile-verification-demo/demo-backend
-    $ mvn spring-boot:run
+### Run the mobile application
+Build the app with the same backend domain:
 
-### Run the end-user client
+    $ cd number-verification/mobile-application
+    $ ./gradlew :androidApp:assembleDebug -PbackendDomain=https://enterprise-backend.example.com
 
-Start a device emulator or connect a physical device, then do the following:
-
-    $ cd infobip-silent-mobile-verification-demo/demo-client
-    $ flutter run
+For a backend running locally, use `-PbackendDomain=http://10.0.2.2:8080` on the Android emulator. To run on iOS, open `iosApp` in Xcode. In the app settings, sign in with `ENTERPRISE_CLIENT_ID` and `ENTERPRISE_CLIENT_SECRET`. The [mobile application README](number-verification/mobile-application/README.md) covers iOS setup, the authorization options, tests and release signing.

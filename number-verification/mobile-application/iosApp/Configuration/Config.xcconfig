@@ -1,0 +1,18 @@
+// Local.xcconfig (gitignored) overrides DEVELOPMENT_TEAM or the bundle ID
+// for developers signing with their own Apple Developer account.
+DEVELOPMENT_TEAM =
+
+// PRODUCT_NAME is also the executable name -- keep it free of spaces.
+// The user-visible home screen name is CFBundleDisplayName, set in the
+// project's INFOPLIST_KEY_CFBundleDisplayName build setting.
+PRODUCT_NAME=infobip-network-apis
+
+// Bundle identifier must be a Uniform Type Identifier: alphanumerics, hyphens and
+// periods only. No underscores, and no unresolved build-setting placeholders --
+// this string has to match the App ID registered in the Apple Developer portal.
+PRODUCT_BUNDLE_IDENTIFIER=com.infobip.napi
+
+CURRENT_PROJECT_VERSION=6
+MARKETING_VERSION=1.3.0
+
+#include? "Local.xcconfig"
